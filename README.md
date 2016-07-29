@@ -1,2 +1,2 @@
 # PythonFaceDetection
-Face detection usaing Haar Cascades
+Face detection using Haar Cascades Classifiers
