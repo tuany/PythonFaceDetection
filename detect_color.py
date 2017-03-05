@@ -40,17 +40,17 @@ cv2.imshow("Mascara", np.hstack([image, output]))
 output = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 # constant cv2.CV_CHAIN_APPROX_NONE = 1
 # constant cv2.RETR_LIST            = 1
-contours,_ = cv2.findContours(output, 0, 2)
+# contours,_ = cv2.findContours(output, 0, 2)
 
-lst_intensities = []
+# lst_intensities = []
 
-for i in range(len(contours)):
-    # Create a mask image that contains the contour filled in
-    cimg = np.zeros_like(output)
-    cv2.drawContours(cimg, contours, i, color=255, thickness=-1)
+# for i in range(len(contours)):
+#     # Create a mask image that contains the contour filled in
+#     cimg = np.zeros_like(output)
+#     cv2.drawContours(cimg, contours, i, color=255, thickness=-1)
 
-    # Access the image pixels and create a 1D numpy array then add to list
-    pts = np.where(cimg == 255)
-    lst_intensities.append(output[pts[1], pts[0]])
+#     # Access the image pixels and create a 1D numpy array then add to list
+#     pts = np.where(cimg == 255)
+#     lst_intensities.append(output[pts[1], pts[0]])
 
 cv2.waitKey(0)
