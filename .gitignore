@@ -90,3 +90,4 @@ ENV/
 
 # Executables binaries OpenFace
 exec/
+img/*

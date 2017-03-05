@@ -114,7 +114,7 @@ def detect(args):
 	# cv2.imshow("Image", orig)
 	# cv2.waitKey(0)
 
-	return { "pixels": dB, "metric": dimB }
+	return { "pixels": dB, "centimeters": dimB, "coordinates": [tl, tr, br, bl] }
 
 if __name__ == '__main__':
 	print("Detect a reference stripe in top of the image module")
