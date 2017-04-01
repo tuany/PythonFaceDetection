@@ -35,10 +35,10 @@ def normalize(args):
     print(img_path)
     rotated_img_path = img_folder + "/rotated.jpg" 
     img = cv2.imread(img_path)
-
+    print(img_path)
     print("Starting pre-processing of image {}".format(img_path))
 
-    colorful = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+    colorful = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     face_cascade = cv2.CascadeClassifier('classifiers/haarcascade_frontalface_alt2.xml')

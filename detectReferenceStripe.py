@@ -103,18 +103,18 @@ def detect(args):
 	print("--Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
 
 	# draw the object sizes on the image
-	# cv2.putText(orig, "{:.1f}cm".format(dimB),
-	# 	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.55, (0, 25, 255), 1)
-	# cv2.putText(orig, "{:.1f}cm".format(dimA),
-	# 	(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.55, (0, 25, 255), 1)
+	cv2.putText(orig, "{:.1f}cm".format(dimB),
+		(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+		0.55, (0, 25, 255), 1)
+	cv2.putText(orig, "{:.1f}cm".format(dimA),
+		(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+		0.55, (0, 25, 255), 1)
 
 	# show the output image
-	# cv2.imshow("Image", orig)
-	# cv2.waitKey(0)
+	cv2.imshow("Image", orig)
+	cv2.waitKey(0)
 
-	return { "pixels": dB, "centimeters": dimB, "coordinates": [tl, tr, br, bl] }
+	return { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
 
 if __name__ == '__main__':
 	print("Detect a reference stripe in top of the image module")
