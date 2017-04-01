@@ -41,21 +41,21 @@ if __name__ == '__main__':
 	# 					  "coordinates": [tl, tr, br, bl] }
 	reference_info = detectReferenceStripe.detect(reference_stripe_args)
 
-	os.chdir(args["image_folder"])
+	# os.chdir(args["image_folder"])
 
-	print("Saving reference_stripe results")
-	try:
-		csvfile = open(root_path+"/"+args["image_folder"]+"reference_stripe.csv", 'w')
-		fieldnames = ['w-pixels', 'w-centimeters', 'h-pixels', 'h-centimeters', 'pixelsPerMetric', 'coordinates']
-		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-		writer.writeheader()
-		writer.writerow(reference_info)
-	except IOError as e:
-	    if e.errno == errno.EACCES:
-	        print("--No write permittion")
-	        os.chdir("../")
-	    # Not a permission error.
-	    raise
+	# print("Saving reference_stripe results")
+	# try:
+	# 	csvfile = open(root_path+"/"+args["image_folder"]+"/"+"reference_stripe.csv", 'w')
+	# 	fieldnames = ['w-pixels', 'w-centimeters', 'h-pixels', 'h-centimeters', 'pixelsPerMetric', 'coordinates']
+	# 	writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+	# 	writer.writeheader()
+	# 	writer.writerow(reference_info)
+	# except IOError as e:
+	#     if e.errno == errno.EACCES:
+	#         print("--No write permittion")
+	#         os.chdir("../")
+	#     # Not a permission error.
+	#     raise
 
 	new_image_folder = root_path+"/"+args["image_folder"]
 	os.chdir(root_path+"/"+"exec/OpenFace")
@@ -74,5 +74,10 @@ if __name__ == '__main__':
 		finally:
 			points_file.close()
 		distances = calculateDistances.distances(points_dict, reference_info)
+		csvfile = open(root_path+"/"+args["image_folder"]+"/"+"distances.csv", 'w')
+		fieldnames = ['ex_en', 'en_ex', 'ex_ex', 'en_en', 'n_Gn', 't_t']
+		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+		writer.writeheader()
+		writer.writerow(distances)
 	else:
 		raise Exception('Landmarking extraction did not went well! Finishing image processing...')
