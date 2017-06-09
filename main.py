@@ -75,7 +75,7 @@ if __name__ == '__main__':
 			points_file.close()
 		distances = calculateDistances.distances(points_dict, reference_info)
 		csvfile = open(root_path+"/"+args["image_folder"]+"/"+"distances.csv", 'w')
-		fieldnames = ['ex_en', 'en_ex', 'ex_ex', 'en_en', 'n_Gn', 't_t']
+		fieldnames = ['ex_en', 'en_ex', 'ex_ex', 'en_en', 'n_Gn', 't_t', 'zy_zy']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
 		writer.writerow(distances)

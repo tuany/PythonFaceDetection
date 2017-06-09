@@ -95,7 +95,7 @@ def detect(args):
 	# compute it as the ratio of pixels to supplied metric
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
-		pixelsPerMetric = dB / args["width"]
+		pixelsPerMetric = (dB / args["width"]) * 1.6934931395
 
 	# compute the size of the object
 	dimA = dA / pixelsPerMetric
