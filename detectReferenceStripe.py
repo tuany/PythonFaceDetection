@@ -70,7 +70,7 @@ def detect(args):
 	(blbrX, blbrY) = midpoint(bl, br)
 
 	# compute the midpoint between the top-left and top-right points,
-	# followed by the midpoint between the top-righ and bottom-right
+	# followed by the midpoint between the bottom-left and bottom-right
 	(tlblX, tlblY) = midpoint(tl, bl)
 	(trbrX, trbrY) = midpoint(tr, br)
 
