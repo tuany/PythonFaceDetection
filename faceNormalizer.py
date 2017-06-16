@@ -6,6 +6,7 @@ from PIL import Image
 import cmath
 from decimal import *
 import os
+import config as cf
 
 def eyeCoordinate(img, h, w1, w2):
     sumX = 0
@@ -31,7 +32,7 @@ def normalize(args):
     if not os.path.exists(img_folder):
         print("Creating output images folder {}".format(img_folder))
         os.makedirs(img_folder)
-    img_path = img_folder + ".jpg"
+    img_path = img_folder + "/undistorted.jpg"
     print(img_path)
     rotated_img_path = img_folder + "/rotated.jpg" 
     img = cv2.imread(img_path)
@@ -45,7 +46,7 @@ def normalize(args):
     print("--Loading cascade classifier: %s" % "haarcascade_frontalface_alt2.xml")
     ################################# detect face
     print("--Trying to find a face:")
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5, cv2.CASCADE_SCALE_IMAGE, (20,20))
+    faces = face_cascade.detectMultiScale(gray, cf.SCALE_FACTOR, cf.MIN_NEIGHBORS, cv2.CASCADE_SCALE_IMAGE, cf.MIN_SIZE)
     print "----Found {0} faces!".format(len(faces))
     for (x,y,w,h) in faces:
         rectangle = cv2.rectangle(colorful,(x,y),(x+w,y+h),(255,0,0),4)

@@ -22,21 +22,24 @@ from common import splitfn
 
 # built-in modules
 import os
+# import csv
+import pickle
 
-if __name__ == '__main__':
-    import sys
-    import getopt
-    from glob import glob
+import sys
+import getopt
+from glob import glob
+import config as cf
 
+def calculateDistortionMatrix():
     img_mask = 'data/chessboard*.jpg'  # default
     img_names = glob(img_mask)
     debug_dir = 'output/'
     if not os.path.isdir(debug_dir):
         os.mkdir(debug_dir)
     
-    square_size = 3 # cm
-    search_window = (6, 6)
-    pattern_size = (9, 6)
+    square_size = cf.CHESSBOARD_SQUARE_SIZE # cm
+    search_window = cf.CHESSBOARD_SEARCH_WINDOW
+    pattern_size = cf.CHESSBOARD_PATTERN_SIZE
 
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
@@ -100,4 +103,30 @@ if __name__ == '__main__':
         print('Undistorted image written to: %s' % outfile)
         cv2.imwrite(outfile, dst)
 
+    print("Saving distortion matrix")
+    reference_info = { "rms": rms, "camera_matrix": camera_matrix, "dist_coefs": dist_coefs }
+    try:
+        root_path = os.getcwd();
+        output_folder = root_path+"/"+"output"
+        if not os.path.exists(output_folder):
+            print("Creating output folder {}".format(output_folder))
+            os.makedirs(output_folder)
+        # csvfile = open(output_folder+"/"+"distortion_matrix.csv", 'w')
+
+        pickle.dump(reference_info, open(cf.DISTORTION_MATRIX, 'wb'))
+        # # fieldnames = ['rms', 'camera_matrix', 'dist_coefs']
+        # writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        # writer.writeheader()
+        # writer.writerow(reference_info)
+        print("Saving distortion matrix: DONE!")
+    except IOError as e:
+        if e.errno == errno.EACCES:
+            print("--No write permittion")
+            os.chdir("../")
+        # Not a permission error.
+        raise
+
     cv2.destroyAllWindows()
+
+if __name__ == '__main__':
+    calculateDistortionMatrix()

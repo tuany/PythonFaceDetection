@@ -92,3 +92,6 @@ ENV/
 exec/
 img/*
 output/*
+data/*.png
+data/*.jpg
+data/*.JPG

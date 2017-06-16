@@ -1,10 +1,13 @@
 import argparse
+import imageUndistortion as iu
 import detectReferenceStripe
 import faceNormalizer
 import calculateDistances
 import csv
 import os
 import subprocess
+import config as cf
+import time
 
 '''
 	This is the main script that try to obtain facial distances of a 
@@ -20,18 +23,19 @@ import subprocess
 '''
 
 if __name__ == '__main__':
+	start_time = time.time()
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--image-folder", required=True,
 		help="path to the input images folder")
-	ap.add_argument("-w", "--width", type=float, required=True,
-		help="width of the reference stripe object in the image (in centimeters)")
 	args = vars(ap.parse_args())
 	
-	root_path = os.getcwd()
+	root_path = cf.ROOT_DIR
 
-	faceNormalizer.normalize( { "image_folder": args["image_folder"] } )
+	iu.undistort(args["image_folder"])
+
+	# faceNormalizer.normalize( { "image_folder": args["image_folder"] } )
 	final_image_path = root_path+"/"+args["image_folder"]+"/rotated.jpg"
-	reference_stripe_args = { "image": final_image_path, "width": args["width"], "s_width": 0.617, "s_height": 0.455, "focal_length": 0.4 }
+	reference_stripe_args = { "image": final_image_path, "width": cf.REFERENCE_STRIPE_WIDTH }
 	
 	# reference_info is a dict: { "w-pixels": dB, 
 	#                     "w-centimeters": dimB, 
@@ -73,11 +77,11 @@ if __name__ == '__main__':
 					points_dict[h.strip()] = float(v)	
 		finally:
 			points_file.close()
-		distances = calculateDistances.distances(points_dict, reference_info)
+		distances = calculateDistances.farkas(points_dict, reference_info)
 		csvfile = open(root_path+"/"+args["image_folder"]+"/"+"distances.csv", 'w')
-		fieldnames = ['ex_en', 'en_ex', 'ex_ex', 'en_en', 'n_Gn', 't_t', 'zy_zy']
-		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+		writer = csv.DictWriter(csvfile, fieldnames=distances.keys())
 		writer.writeheader()
 		writer.writerow(distances)
 	else:
 		raise Exception('Landmarking extraction did not went well! Finishing image processing...')
+	print("--- Total execution time: %s seconds ---" % (time.time() - start_time))

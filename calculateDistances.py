@@ -9,7 +9,7 @@ def midpoint(ptA, ptB):
 # 68 pontos que combinados 2 a 2 (distancia), por arranjo simples sem repeticao
 # C(m,p) = m! / ((m-p)! * p!)
 # C(68,2) = 68! / ((68 - 2)! * 2!) = 2278
-def distancesFarkas(points, reference):
+def farkas(points, reference):
 	# esta estrutura descreve as distancias baseadas no livro do Farkas, ou seja,
 	# NAO possui todas as distancias possiveis.
 	distances = {}
@@ -71,7 +71,7 @@ def distancesFarkas(points, reference):
 	br = (points["x_47"], points["y_47"])
 	(blbrX, blbrY) = midpoint(bl, br)
 
-	distances["psr_pir"]      = (dist.euclidean((tltrX, tltrY),    (blbrX, blbrY))) /  reference["pixelsPerMetric"]
+	distances["psr_pir"]    = (dist.euclidean((tltrX, tltrY),    (blbrX, blbrY))) /  reference["pixelsPerMetric"]
 	
 	# distancia ponto mediano palpebra superior ao canto externo olho esquerdo
 	distances["psr_exr"]    = (dist.euclidean((tltrX, tltrY),     (points["x_46"],  points["y_46"]))) /  reference["pixelsPerMetric"]
@@ -123,3 +123,6 @@ def distancesFarkas(points, reference):
 	distances["enr_se"]     = (dist.euclidean((points["x_43"],  points["y_43"]),     (points["x_29"], points["y_29"]))) /  reference["pixelsPerMetric"]		
 
 	return distances
+
+def all(points, reference):
+	print("OLA")

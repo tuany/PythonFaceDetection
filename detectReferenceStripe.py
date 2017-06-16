@@ -4,13 +4,14 @@ from imutils import contours
 import numpy as np
 import imutils
 import cv2
+import config as cf
 
 def midpoint(ptA, ptB):
 	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
 def detect(args):
-	# load the image, convert it to grayscale, and blur it slightly
-	print("Reference stripe detect module")
+	print("Image:")
+	print(args["image"])
 	image = cv2.imread(args["image"])
 	print("--Converting to gray scale")
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -95,14 +96,14 @@ def detect(args):
 	# compute it as the ratio of pixels to supplied metric
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
-		pixelsPerMetric = (dB / args["width"]) * 1.6934931395
+		pixelsPerMetric = (dB / args["width"]) * cf.NORM_FACTOR # factor calculated previously
 
 	# compute the size of the object
 	dimA = dA / pixelsPerMetric
 	dimB = dB / pixelsPerMetric
 	print("--Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
 
-	# draw the object sizes on the image
+	# # draw the object sizes on the image
 	# cv2.putText(orig, "{:.1f}cm".format(dimB),
 	# 	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
 	# 	0.55, (0, 25, 255), 1)

@@ -21,3 +21,6 @@ for (x,y,w,h) in faces:
 		cv2.rectangle(roi_color,(mx,my),(mx+mw,my+mh),(0,0,255),2)
 cv2.imshow('img',img)
 cv2.waitKey(0)
+
+if __name__ == '__main__':
+    print("Face detector module")
