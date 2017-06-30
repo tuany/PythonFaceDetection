@@ -96,25 +96,12 @@ def detect(args):
 	# compute it as the ratio of pixels to supplied metric
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
-		pixelsPerMetric = (dB / args["width"]) * cf.NORM_FACTOR # factor calculated previously
+		pixelsPerMetric = (dB / cf.REFERENCE_STRIPE_WIDTH) * cf.NORM_FACTOR # factor calculated previously
 
 	# compute the size of the object
 	dimA = dA / pixelsPerMetric
 	dimB = dB / pixelsPerMetric
 	print("--Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
-
-	# # draw the object sizes on the image
-	# cv2.putText(orig, "{:.1f}cm".format(dimB),
-	# 	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.55, (0, 25, 255), 1)
-	# cv2.putText(orig, "{:.1f}cm".format(dimA),
-	# 	(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.55, (0, 25, 255), 1)
-
-	# # show the output image
-	# cv2.imshow("Image", orig)
-	# cv2.waitKey(0)
-
 	return { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
 
 if __name__ == '__main__':

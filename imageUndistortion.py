@@ -13,9 +13,9 @@ import numpy as np
 import cameraCalibration02
 
 def undistort(img_folder):
-	image_path=img_folder+".JPG"
+	image_path=img_folder
 	img = cv2.imread(image_path)
-	outfile=img_folder+"/undistorted.jpg"
+	outfile=img_folder+"_output/undistorted.jpg"
 	if not os.path.exists(img_folder):
 		print("Creating output images folder {}".format(img_folder))
 		os.makedirs(img_folder)

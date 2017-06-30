@@ -9,9 +9,12 @@ ROOT_DIR=os.getcwd()
 OUTPUT_DIR=ROOT_DIR+"/output"
 IMG_DIR=ROOT_DIR+"/img"
 TRAINING_DATA_DIR=ROOT_DIR+"/data"
-EXTERNAL_EXEC_DIR=ROOT_DIR+"/exec"
+EXTERNAL_EXEC_DIR=ROOT_DIR+"/exec/OpenFace"
 CASCADE_CLASSIFIERS_DIR=ROOT_DIR+"/classifiers"
 DISTORTION_MATRIX=OUTPUT_DIR+"/distortion_matrix.pkl"
+
+# glob masks
+INPUT_IMG_MASK='img/DSCN*.jpg'
 
 # measure units and vals
 REFERENCE_STRIPE_WIDTH=50 #cm
