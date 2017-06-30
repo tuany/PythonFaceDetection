@@ -36,9 +36,10 @@ if __name__ == '__main__':
 	# get all images in img/ directory 
 	img_names = glob(cf.INPUT_IMG_MASK)
 	img_names_processed = []
-	print(img_names)
+	print("%4d images found!" % len(img_names), end='')
+	print("ok")
 	for fn in img_names:
-		print('processing %s... ' % fn)
+		print('processing %s... ' % fn, end='')
 		output_folder = fn+"_output"
 		img = cv2.imread(fn, 0)
 
@@ -46,24 +47,14 @@ if __name__ == '__main__':
 			print("Failed to load", fn)
 			continue
 
-		iu.undistort(fn)
-		faceNormalizer.normalize( { "image_folder": output_folder } )
 		final_image_path = output_folder+"/rotated.jpg"
-		reference_stripe_args = { "image": final_image_path, "width": cf.REFERENCE_STRIPE_WIDTH }
-		
-		# reference_info is a dict: { "w-pixels": dB, 
-		#                     "w-centimeters": dimB, 
-		#                     "h-pixels": dA, 
-		#                     "h-centimeters": dimA, 
-		#                     "pixelsPerMetric": pixelsPerMetric, 
-		#                     "coordinates": [tl, tr, br, bl] }
-		reference_info = detectReferenceStripe.detect(reference_stripe_args)
 
-		# os.chdir(args["image_folder"])
-
+		# first detect the stripe
+		faceNormalizer.normalize(fn)
+		reference_info = detectReferenceStripe.detect(final_image_path)
 		# print("Saving reference_stripe results")
 		# try:
-		#   csvfile = open(root_path+"/"+args["image_folder"]+"/"+"reference_stripe.csv", 'w')
+		#   csvfile = open(output_folder+"/"+"reference_stripe.csv", 'wb')
 		#   fieldnames = ['w-pixels', 'w-centimeters', 'h-pixels', 'h-centimeters', 'pixelsPerMetric', 'coordinates']
 		#   writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		#   writer.writeheader()
@@ -74,6 +65,9 @@ if __name__ == '__main__':
 		#         os.chdir("../")
 		#     # Not a permission error.
 		#     raise
+
+		iu.undistort(fn)
+		faceNormalizer.normalize( fn )
 
 		process_out = subprocess.check_call([cf.EXTERNAL_EXEC_DIR+"/FeatureExtraction", "-f", final_image_path, "-of", output_folder+"/points.csv", "-oi", output_folder+"/marked.jpg", "-no3Dfp", "-noMparams", "-noPose", "-noAUs", "-noGaze"], shell=True)
 		if process_out == 0:
@@ -96,10 +90,8 @@ if __name__ == '__main__':
 		else:
 			raise Exception('Landmarking extraction did not went well! Finishing image processing...')
 		img_names_processed.append(fn)
-		print('processing %s... ' % fn, end='')
 		print('ok')
 		os.chdir(root_path)
-		time.sleep(5)
 	print("Images processed: ")	
 	print(img_names_processed)
-	print("--- Total execution time: %s seconds ---" % (time.time() - start_time))
+	print("--- Total execution time: %s minutes ---" % ((time.time() - start_time)/60))

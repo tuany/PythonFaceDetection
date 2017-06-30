@@ -26,14 +26,15 @@ def eyeCoordinate(img, h, w1, w2):
     y = sumY / countY    
     return y, x
 
-def normalize(args):
+def normalize(fn):
     ################################# load image
-    img_folder = args["image_folder"]
+    img_folder = fn+"_output"
     if not os.path.exists(img_folder):
         print("Creating output images folder {}".format(img_folder))
         os.makedirs(img_folder)
-    img_path = img_folder + "/undistorted.jpg"
-    print(img_path)
+    img_path = fn
+    if os.path.isfile(img_folder + "/undistorted.jpg"):
+        img_path = img_folder + "/undistorted.jpg"
     rotated_img_path = img_folder + "/rotated.jpg" 
     img = cv2.imread(img_path)
     print(img_path)
@@ -106,16 +107,12 @@ def normalize(args):
     alpha = cmath.phase(alpha_complex)
     alpha = alpha / 2
     print("----Alpha angle to rotate image: %f" % alpha)
-    ################################# rotate image
     print("----Rotating and saving output image:")
     img = Image.open(img_path)
     rotated_image = img.rotate(-alpha)
     rotated_image.save(rotated_img_path)
 
     print("------Output image: %s saved!" % rotated_img_path)
-    # rotated_image.show()
-    # c = cv2.waitKey()
-    # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     print("Image pre-processor module")

@@ -9,10 +9,8 @@ import config as cf
 def midpoint(ptA, ptB):
 	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
-def detect(args):
-	print("Image:")
-	print(args["image"])
-	image = cv2.imread(args["image"])
+def detect(image_path):
+	image = cv2.imread(image_path)
 	print("--Converting to gray scale")
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	print("--Applying Gaussian Blur")
@@ -21,7 +19,12 @@ def detect(args):
 	# perform edge detection, then perform a dilation + erosion to
 	# close gaps in between object edges
 	print("--Detecting edges with Canny")
-	edged = cv2.Canny(gray, 200, 400)
+	v = np.median(image)
+	sigma=0.33
+	lower = int(max(0, (1.0 - sigma) * v))
+	upper = int(min(255, (1.0 + sigma) * v))
+	# edged = cv2.Canny(gray, lower, upper)
+	edged = cv2.Canny(gray, 10, 200)
 	print("----Performing dilation and erosion...")
 	edged = cv2.dilate(edged, None, iterations=1)
 	edged = cv2.erode(edged, None, iterations=1)
@@ -36,7 +39,7 @@ def detect(args):
 	# 'pixels per metric' calibration variable
 	print("----Sorting countours: top-to-bottom")
 	(cnts, _) = contours.sort_contours(cnts, "top-to-bottom")
-	pixelsPerMetric = None
+	pixelsPerMetric = cf.PPM # obtained by testing reference stripe in several images
 
 	# I will only use the most top contourArea that is the reference stripe
 	c = cnts[0]
@@ -70,8 +73,8 @@ def detect(args):
 	(tltrX, tltrY) = midpoint(tl, tr)
 	(blbrX, blbrY) = midpoint(bl, br)
 
-	# compute the midpoint between the top-left and top-right points,
-	# followed by the midpoint between the bottom-left and bottom-right
+	# compute the midpoint between the top-left and bottom-left points,
+	# followed by the midpoint between the top-right and bottom-right
 	(tlblX, tlblY) = midpoint(tl, bl)
 	(trbrX, trbrY) = midpoint(tr, br)
 
@@ -91,17 +94,20 @@ def detect(args):
 	# compute the Euclidean distance between the midpoints
 	dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
 	dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+	print("dA:  %.2f" % (dA))
+	print("dB:  %.2f" % (dB))
 
 	# if the pixels per metric has not been initialized, then
 	# compute it as the ratio of pixels to supplied metric
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
-		pixelsPerMetric = (dB / cf.REFERENCE_STRIPE_WIDTH) * cf.NORM_FACTOR # factor calculated previously
+		pixelsPerMetric = (dB / 50.0) * cf.NORM_FACTOR # factor calculated previously
 
 	# compute the size of the object
-	dimA = dA / pixelsPerMetric
+	dimA = dA / pixelsPerMetric 
 	dimB = dB / pixelsPerMetric
 	print("--Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
+	print("--Pixels per metric: (%.2f)" % (pixelsPerMetric))
 	return { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
 
 if __name__ == '__main__':
