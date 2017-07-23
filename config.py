@@ -5,7 +5,7 @@
 import os
 
 # common directories
-ROOT_DIR=os.getcwd()
+ROOT_DIR=os.path.abspath("C:/Users/Tuany/Documents/casos")#os.path.abspath(os.getcwd())
 OUTPUT_DIR=ROOT_DIR+"/output"
 IMG_DIR=ROOT_DIR+"/img"
 TRAINING_DATA_DIR=ROOT_DIR+"/data"
@@ -26,7 +26,7 @@ SCALE_FACTOR=1.3 # face cascade detect mustiscale scale factor
 MIN_NEIGHBORS=5 # face cascade min neighbors
 MIN_SIZE=(20,20) # face cascade window size
 NORM_FACTOR=1.16650828298 # normalization factor. The face is not in the same plan as the stripe so this factor was calculated
-PPM=29.2617813648 # pixels per metric 29 px in 1 cm
+PPM=33.0869757906 # px in 1 cm
 # script for camera calibration
 CAMERA_CALIBRATION_SCRIPT="cameraCalibration02"
 

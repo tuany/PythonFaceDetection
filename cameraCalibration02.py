@@ -29,12 +29,16 @@ import sys
 import getopt
 from glob import glob
 import config as cf
+import logger
 
 def calculateDistortionMatrix():
+    log = logger.getLogger(__file__)
     img_mask = 'data/chessboard*.jpg'  # default
+    log.info("Using image mask {} in dir".format(img_mask))
     img_names = glob(img_mask)
     debug_dir = 'output/'
     if not os.path.isdir(debug_dir):
+        log.info("Creating dir {}".format(debug_dir))
         os.mkdir(debug_dir)
     
     square_size = cf.CHESSBOARD_SQUARE_SIZE # cm
@@ -50,10 +54,10 @@ def calculateDistortionMatrix():
     h, w = 0, 0
     img_names_undistort = []
     for fn in img_names:
-        print('processing %s... ' % fn, end='')
+        log.info('processing %s... ' % fn)
         img = cv2.imread(fn, 0)
         if img is None:
-            print("Failed to load", fn)
+            log.error("Failed to load {}. Going to the next image.".format(fn))
             continue
 
         h, w = img.shape[:2]
@@ -72,22 +76,22 @@ def calculateDistortionMatrix():
                 img_names_undistort.append(outfile)
 
         if not found:
-            print('chessboard not found')
+            log.warning('chessboard not found')
             continue
 
         img_points.append(corners.reshape(-1, 2))
         obj_points.append(pattern_points)
-        print('ok')
+        log.info("Chessboard found in image {}. Processed!".format(fn))
 
     # calculate camera distortion
     rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
 
-    print("\nRMS:", rms)
-    print("camera matrix:\n", camera_matrix)
-    print("distortion coefficients: ", dist_coefs.ravel())
+    log.debug("\nRMS:", rms)
+    log.debug("camera matrix:\n", camera_matrix)
+    log.debug("distortion coefficients: ", dist_coefs.ravel())
 
     # undistort the image with the calibration
-    print('')
+    log.info("Testing the distortion matrix")
     for img_found in img_names_undistort:
         img = cv2.imread(img_found)
 
@@ -100,16 +104,16 @@ def calculateDistortionMatrix():
         x, y, w, h = roi
         dst = dst[y:y+h, x:x+w]
         outfile = img_found + '_undistorted.png'
-        print('Undistorted image written to: %s' % outfile)
+        log.info('Undistorted image written to: %s' % outfile)
         cv2.imwrite(outfile, dst)
 
-    print("Saving distortion matrix")
+    log.info("Saving distortion matrix")
     reference_info = { "rms": rms, "camera_matrix": camera_matrix, "dist_coefs": dist_coefs }
     try:
         root_path = os.getcwd();
         output_folder = root_path+"/"+"output"
         if not os.path.exists(output_folder):
-            print("Creating output folder {}".format(output_folder))
+            log.info("Creating output folder {}".format(output_folder))
             os.makedirs(output_folder)
         # csvfile = open(output_folder+"/"+"distortion_matrix.csv", 'w')
 
@@ -118,10 +122,10 @@ def calculateDistortionMatrix():
         # writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         # writer.writeheader()
         # writer.writerow(reference_info)
-        print("Saving distortion matrix: DONE!")
+        log.info("Saved distortion matrix {}".format(cf.DISTORTION_MATRIX))
     except IOError as e:
         if e.errno == errno.EACCES:
-            print("--No write permittion")
+            log.exception("--No write permittion")
             os.chdir("../")
         # Not a permission error.
         raise

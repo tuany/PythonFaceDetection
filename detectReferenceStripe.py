@@ -5,39 +5,41 @@ import numpy as np
 import imutils
 import cv2
 import config as cf
+import logger
 
 def midpoint(ptA, ptB):
 	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
 def detect(image_path):
+	log = logger.getLogger(__file__)
 	image = cv2.imread(image_path)
-	print("--Converting to gray scale")
+	log.debug("Converting {} to gray scale".format(image_path))
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-	print("--Applying Gaussian Blur")
+	log.debug("Applying Gaussian Blur")
 	gray = cv2.GaussianBlur(gray, (7, 7), 0)
 
 	# perform edge detection, then perform a dilation + erosion to
 	# close gaps in between object edges
-	print("--Detecting edges with Canny")
+	log.debug("Detecting edges with Canny")
 	v = np.median(image)
 	sigma=0.33
 	lower = int(max(0, (1.0 - sigma) * v))
 	upper = int(min(255, (1.0 + sigma) * v))
-	# edged = cv2.Canny(gray, lower, upper)
-	edged = cv2.Canny(gray, 10, 200)
-	print("----Performing dilation and erosion...")
+	edged = cv2.Canny(gray, lower, upper)
+	#edged = cv2.Canny(gray, 10, 200)
+	log.debug("Performing dilation and erosion...")
 	edged = cv2.dilate(edged, None, iterations=1)
 	edged = cv2.erode(edged, None, iterations=1)
 
 	# find contours in the edge map
-	print("--Finding countours")
+	log.debug("Finding countours")
 	cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 
 	# sort the contours from left-to-right and initialize the
 	# 'pixels per metric' calibration variable
-	print("----Sorting countours: top-to-bottom")
+	log.debug("Sorting countours: top-to-bottom")
 	(cnts, _) = contours.sort_contours(cnts, "top-to-bottom")
 	pixelsPerMetric = cf.PPM # obtained by testing reference stripe in several images
 
@@ -68,7 +70,7 @@ def detect(image_path):
 	# unpack the ordered bounding box, then compute the midpoint
 	# between the top-left and top-right coordinates, followed by
 	# the midpoint between bottom-left and bottom-right coordinates
-	print("----Calculating coordinates")
+	log.debug("Calculating coordinates")
 	(tl, tr, br, bl) = box
 	(tltrX, tltrY) = midpoint(tl, tr)
 	(blbrX, blbrY) = midpoint(bl, br)
@@ -90,8 +92,7 @@ def detect(image_path):
 	cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
 		(255, 0, 255), 1)
 
-	print("----Computing euclidean distance between points in the reference stripe...")
-	# compute the Euclidean distance between the midpoints
+	log.debug("Computing euclidean distance between points in the reference stripe...")
 	dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
 	dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
 	print("dA:  %.2f" % (dA))
@@ -101,13 +102,13 @@ def detect(image_path):
 	# compute it as the ratio of pixels to supplied metric
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
-		pixelsPerMetric = (dB / 50.0) * cf.NORM_FACTOR # factor calculated previously
+		pixelsPerMetric = (dB / 50.0) # in case something go wrong
 
 	# compute the size of the object
 	dimA = dA / pixelsPerMetric 
 	dimB = dB / pixelsPerMetric
-	print("--Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
-	print("--Pixels per metric: (%.2f)" % (pixelsPerMetric))
+	log.info("Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
+	log.info("Pixels per metric: (%.2f)" % (pixelsPerMetric))
 	return { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
 
 if __name__ == '__main__':
