@@ -40,13 +40,18 @@ def aggregateDistances(distances, all_img_distances, output, idt, fn):
 	distances["id"] = idt
 	distances["img_name"] = fn
 	all_img_distances[idt] = distances
-	file_exists = os.path.isfile(output)
-	with open (output+".csv", 'wb') as csvfile:
+	file_exists = os.path.isfile(output+'.csv')
+	if file_exists:
+		mode = 'ab'
+	else:
+		mode = 'wb'
+	with open (output+".csv", mode) as csvfile:
 		writer = csv.DictWriter(csvfile, fieldnames=distances.keys())
 		if not file_exists:
 			writer.writeheader()
 		writer.writerow(distances)
-	with open (output+".pkl", 'wb') as pklfile:
+	log.info("Distances file saved in output dir!")
+	with open (output+".pkl", mode) as pklfile:
 		pickle.dump(distances, pklfile)
 	return all_img_distances
 
@@ -145,13 +150,16 @@ if __name__ == '__main__':
 				log.exception("Points file not found!")
 
 			distances_few = calculateDistances.few(final_image_path, "img_"+str(count), points_dict, reference_info)
-			few_distances_dict = aggregateDistances(distances_few, few_distances_dict, cf.ROOT_DIR+"/"+output_folder+"/"+"distances_few", count, fn)
+			log.info("Aggreagating distances: FEW")
+			few_distances_dict = aggregateDistances(distances_few, few_distances_dict, cf.OUTPUT_DIR+"/"+"distances_few", count, fn)
 			
 			distances_all = calculateDistances.all(points_dict, reference_info)
-			all_distances_dict = aggregateDistances(distances_all, all_distances_dict, cf.ROOT_DIR+"/"+output_folder+"/"+"distances_all", count, fn)
+			log.info("Aggreagating distances: ALL")
+			all_distances_dict = aggregateDistances(distances_all, all_distances_dict, cf.OUTPUT_DIR + "/"+"distances_all", count, fn)
 
 			distances_farkas = calculateDistances.farkas(points_dict, reference_info)
-			farkas_distances_dict = aggregateDistances(distances_farkas, farkas_distances_dict, cf.ROOT_DIR+"/"+output_folder+"/"+"distances_farkas", count, fn)
+			log.info("Aggreagating distances: FARKAS")
+			farkas_distances_dict = aggregateDistances(distances_farkas, farkas_distances_dict, cf.OUTPUT_DIR+"/"+"distances_farkas", count, fn)
 
 			count = count + 1 
 			img_names_processed.append(fn)
@@ -159,17 +167,5 @@ if __name__ == '__main__':
 			log.critical("Landmarking extraction did not went well! Finishing image processing...")
 			continue
 		os.chdir(cf.ROOT_DIR)
-	with open(cf.OUTPUT_DIR+"/"+"distances_few.pkl", "wb") as f:
-	    pickle.dump(len(few_distances_dict), f)
-	    for value in few_distances_dict:
-	        pickle.dump(value, f)
-	with open(cf.OUTPUT_DIR+"/"+"distances_farkas.pkl", "wb") as f:
-	    pickle.dump(len(farkas_distances_dict), f)
-	    for value in farkas_distances_dict:
-	        pickle.dump(value, f)
-	with open(cf.OUTPUT_DIR+"/"+"distances_all.pkl", "wb") as f:
-	    pickle.dump(len(all_distances_dict), f)
-	    for value in all_distances_dict:
-	        pickle.dump(value, f)
 	log.info("Total: %d " % len(img_names_processed))	
 	log.info("--- Total execution time: %s minutes ---" % ((time.time() - start_time)/60))

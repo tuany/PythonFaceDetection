@@ -41,7 +41,7 @@ def detect(image_path):
 	# 'pixels per metric' calibration variable
 	log.debug("Sorting countours: top-to-bottom")
 	(cnts, _) = contours.sort_contours(cnts, "top-to-bottom")
-	pixelsPerMetric = cf.PPM # obtained by testing reference stripe in several images
+	pixelsPerMetric = None #cf.PPM # obtained by testing reference stripe in several images
 
 	# I will only use the most top contourArea that is the reference stripe
 	c = cnts[0]

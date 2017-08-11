@@ -5,7 +5,7 @@
 import os
 
 # common directories
-ROOT_DIR=os.path.abspath("C:/Users/Tuany/Documents/casos")#os.path.abspath(os.getcwd())
+ROOT_DIR=os.path.abspath("C:/Users/Tuany/Documents/controles")#os.path.abspath(os.getcwd())
 OUTPUT_DIR=ROOT_DIR+"/output"
 IMG_DIR=ROOT_DIR+"/img"
 TRAINING_DATA_DIR=ROOT_DIR+"/data"
