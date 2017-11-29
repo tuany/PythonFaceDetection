@@ -1,32 +1,33 @@
 from scipy.spatial import distance as dist
 from imutils import perspective
 from imutils import contours
+import matplotlib.pyplot as plt
 import numpy as np
 import imutils
 import cv2
 import config as cf
 import logger
+log = logger.getLogger(__file__)
 
 def midpoint(ptA, ptB):
 	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
 def detect(image_path):
-	log = logger.getLogger(__file__)
 	image = cv2.imread(image_path)
 	log.debug("Converting {} to gray scale".format(image_path))
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	log.debug("Applying Gaussian Blur")
-	gray = cv2.GaussianBlur(gray, (7, 7), 0)
+	blurred = cv2.bilateralFilter(gray, 11, 17, 17)#cv2.GaussianBlur(gray, (7, 7), 0)
 
 	# perform edge detection, then perform a dilation + erosion to
 	# close gaps in between object edges
 	log.debug("Detecting edges with Canny")
 	v = np.median(image)
-	sigma=0.33
+	sigma=0.85
 	lower = int(max(0, (1.0 - sigma) * v))
 	upper = int(min(255, (1.0 + sigma) * v))
-	edged = cv2.Canny(gray, lower, upper)
-	#edged = cv2.Canny(gray, 10, 200)
+	edged = cv2.Canny(blurred, lower, upper)
+
 	log.debug("Performing dilation and erosion...")
 	edged = cv2.dilate(edged, None, iterations=1)
 	edged = cv2.erode(edged, None, iterations=1)
@@ -42,14 +43,20 @@ def detect(image_path):
 	log.debug("Sorting countours: top-to-bottom")
 	(cnts, _) = contours.sort_contours(cnts, "top-to-bottom")
 	pixelsPerMetric = None #cf.PPM # obtained by testing reference stripe in several images
-
 	# I will only use the most top contourArea that is the reference stripe
 	c = cnts[0]
 	i = 1
+
+	return_dict = None
 	while cv2.contourArea(c) < 100 and i < len(cnts):
 	# if the contour is not sufficiently large, ignore it
 		c = cnts[i]
 		i=i+1
+	# try:
+	# 	for c in cnts:
+	# 		if cv2.contourArea(c) < 100:
+	# 			continue
+	log.debug("c area: " + str(cv2.contourArea(c)))
 	# compute the rotated bounding box of the contour
 	orig = image.copy()
 	box = cv2.minAreaRect(c)
@@ -81,16 +88,16 @@ def detect(image_path):
 	(trbrX, trbrY) = midpoint(tr, br)
 
 	# draw the midpoints on the image
-	cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0, 0), -1)
-	cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (255, 0, 0), -1)
-	cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0), -1)
-	cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (255, 0, 0), -1)
+	cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0, 0),-1)
+	cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (255, 0, 0),-1)
+	cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0),-1)
+	cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (255, 0, 0),-1)
 
 	# draw lines between the midpoints
 	cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
-		(255, 0, 255), 1)
+		(255, 0, 255), 3)
 	cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
-		(255, 0, 255), 1)
+		(255, 0, 255), 3)
 
 	log.debug("Computing euclidean distance between points in the reference stripe...")
 	dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
@@ -103,13 +110,30 @@ def detect(image_path):
 	# (in this case, centimeters)
 	if pixelsPerMetric is None:
 		pixelsPerMetric = (dB / 50.0) # in case something go wrong
+		pixelsPerMetric2 = (dA / 5.5) 
 
 	# compute the size of the object
-	dimA = dA / pixelsPerMetric 
+	dimA = dA / pixelsPerMetric2 
 	dimB = dB / pixelsPerMetric
+
 	log.info("Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
 	log.info("Pixels per metric: (%.2f)" % (pixelsPerMetric))
-	return { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
+	return_dict = { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
+	# draw the object sizes on the image
+	# cv2.putText(orig, "{:.1f}in".format(dimA),
+	# 	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+	# 	0.65, (255, 255, 255), 2)
+	# cv2.putText(orig, "{:.1f}in".format(dimB),
+	# 	(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+	# 	0.65, (255, 255, 255), 2)
+	# cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+	# cv2.resizeWindow('image', 800,600)
+	# cv2.imshow("image", orig)
+	# cv2.waitKey(0)
+	# except KeyboardInterrupt:
+	# 	log.info("Process interrupted manually")
+	log.info("Return dict: " + str(return_dict))
+	return return_dict, edged, orig
 
 if __name__ == '__main__':
 	print("Detect a reference stripe in top of the image module")

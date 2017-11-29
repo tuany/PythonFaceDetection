@@ -1,4 +1,3 @@
-
 # Python 2/3 compatibility
 from __future__ import print_function
 from glob import glob
@@ -18,9 +17,11 @@ import cv2
 import imageUndistortion as iu
 import detectReferenceStripe
 import faceNormalizer
-import calculateDistances
+import calculateDistancesCm
+import calculateDistancesPx
 import config as cf
 import logger
+import copy
 
 
 '''
@@ -36,24 +37,42 @@ import logger
 	5 - Distances calculus
 '''
 
-def aggregateDistances(distances, all_img_distances, output, idt, fn):
-	distances["id"] = idt
-	distances["img_name"] = fn
-	all_img_distances[idt] = distances
-	file_exists = os.path.isfile(output+'.csv')
+def aggregateDistances(distances_eu, all_img_distances_eu, distances_mh, all_img_distances_mh, output, idt, fn):
+	distances_eu["id"] = idt
+	distances_eu["img_name"] = fn
+	all_img_distances_eu[idt] = distances_eu
+
+	distances_mh["id"] = idt
+	distances_mh["img_name"] = fn
+	all_img_distances_mh[idt] = distances_mh
+
+	output_eu = output + '_eu'
+	output_mh = output + '_mh'
+
+	file_exists = os.path.isfile(output_eu+'.csv')
 	if file_exists:
 		mode = 'ab'
 	else:
 		mode = 'wb'
-	with open (output+".csv", mode) as csvfile:
-		writer = csv.DictWriter(csvfile, fieldnames=distances.keys())
+	with open (output_eu+".csv", mode) as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=distances_eu.keys())
 		if not file_exists:
 			writer.writeheader()
-		writer.writerow(distances)
-	log.info("Distances file saved in output dir!")
-	with open (output+".pkl", mode) as pklfile:
-		pickle.dump(distances, pklfile)
-	return all_img_distances
+		writer.writerow(distances_eu)
+	log.info("Euclidian distances file saved in output dir!")
+	with open (output_eu+".pkl", mode) as pklfile:
+		pickle.dump(distances_eu, pklfile)
+
+	with open (output_mh+".csv", mode) as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=distances_mh.keys())
+		if not file_exists:
+			writer.writeheader()
+		writer.writerow(distances_mh)
+	log.info("Manhattan distances file saved in output dir!")
+	with open (output_mh+".pkl", mode) as pklfile:
+		pickle.dump(distances_mh, pklfile)
+
+	return all_img_distances_eu, all_distances_dict_mh
 
 if __name__ == '__main__':
 	# initialization and logging configuration
@@ -66,9 +85,27 @@ if __name__ == '__main__':
 	# get all images in img/ directory 
 	img_names = glob(cf.INPUT_IMG_MASK)
 	img_names_processed = []
-	few_distances_dict = {}
-	all_distances_dict = {}
-	farkas_distances_dict = {}
+	few_distances_dict_eu = {}
+	all_distances_dict_eu = {}
+	farkas_distances_dict_eu = {}
+	few_distances_dict_mh = {}
+	all_distances_dict_mh = {}
+	farkas_distances_dict_mh = {}
+
+	few_distances_dict_eu_px = {}
+	all_distances_dict_eu_px = {}
+	farkas_distances_dict_eu_px = {}
+	few_distances_dict_mh_px = {}
+	all_distances_dict_mh_px = {}
+	farkas_distances_dict_mh_px = {}
+
+	few_distances_dict_eu_px_1000 = {}
+	all_distances_dict_eu_px_1000 = {}
+	farkas_distances_dict_eu_px_1000 = {}
+	few_distances_dict_mh_px_1000 = {}
+	all_distances_dict_mh_px_1000 = {}
+	farkas_distances_dict_mh_px_1000 = {}
+
 	log.info("%4d images found!" % len(img_names))
 	count = 1
 	for fn in img_names:
@@ -80,27 +117,29 @@ if __name__ == '__main__':
 			log.warning("Failed to load", fn)
 			continue
 
-		final_image_path = os.path.abspath(output_folder+"/rotated.jpg")
+		final_image_path = os.path.abspath(output_folder+"/cropped.jpg")
 
 		file_exists = os.path.isfile(final_image_path)
 		reference_file_exists = os.path.isfile(output_folder+"/"+"reference_stripe.pkl")
-		if not file_exists:
-			iu.undistort(fn)
+		# if not file_exists:
+			# iu.undistort(fn)
 		try:
 			reference_info = {}
 			if not file_exists:
 				faceNormalizer.normalize(fn)
 			if not reference_file_exists:
-				reference_info = detectReferenceStripe.detect(final_image_path)	
+				reference_info, edged, striped = detectReferenceStripe.detect(final_image_path)	
+				cv2.imwrite(output_folder+"/edged.jpg", edged)
+				cv2.imwrite(output_folder+"/stripe.jpg", striped)
 				try:
-				  reference_stripe_file = output_folder+"/"+"reference_stripe"
-				  csvfile = open(reference_stripe_file+".csv", 'wb')
-				  fieldnames = ['w-pixels', 'w-centimeters', 'h-pixels', 'h-centimeters', 'pixelsPerMetric', 'coordinates']
-				  writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-				  writer.writeheader()
-				  writer.writerow(reference_info)
-				  with open(reference_stripe_file+".pkl", "wb") as f:
-				  	pickle.dump(reference_info, f)
+					reference_stripe_file = output_folder+"/"+"reference_stripe"
+					csvfile = open(reference_stripe_file+".csv", 'wb')
+					fieldnames = ['w-pixels', 'w-centimeters', 'h-pixels', 'h-centimeters', 'pixelsPerMetric', 'coordinates']
+					writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+					writer.writeheader()
+					writer.writerow(reference_info)
+					with open(reference_stripe_file+".pkl", "wb") as f:
+						pickle.dump(reference_info, f)
 				except IOError as e:
 				    if e.errno == errno.EACCES:
 				        log.error("--No write permittion")
@@ -122,8 +161,10 @@ if __name__ == '__main__':
 		except ValueError as ve:
 			log.exception("Exception processing %s", fn)
 			continue
+		except ZeroDivisionError as zeroError:
+			log.exception("Exception processing reference stripe in %s", fn)
+			continue
 
-		# faceNormalizer.normalize( fn )
 		log.info("Calling external programming for feature extraction")
 		file_exists = os.path.isfile(cf.ROOT_DIR+"/"+output_folder+"/points.csv")
 		if not file_exists:
@@ -133,33 +174,73 @@ if __name__ == '__main__':
 		if process_out == 0:
 			log.info("Feature extraction done. Writing results to file.")
 			points_dict = {}
-			try:
-				os.chdir(cf.ROOT_DIR+"/"+output_folder)
-				points_file = open("points.csv", 'rb')
-				reader = csv.reader(points_file)
-				headers = reader.next()
-				for row in reader:
-					for h, v in zip(headers, row):
-						points_dict[h.strip()] = float(v)
-				log.info("Points file saved!")
-				points_file.close()
-				with open("points.pkl", "wb") as f:
-			  		pickle.dump(points_dict, f)
+			turnedoff = False
+			if not turnedoff:
+				try:
+					os.chdir(cf.ROOT_DIR+"/"+output_folder)
+					points_file = open("points.csv", 'rb')
+					reader = csv.reader(points_file)
+					headers = reader.next()
+					for row in reader:
+						for h, v in zip(headers, row):
+							points_dict[h.strip()] = float(v)
+					log.info("Points file saved!")
+					points_file.close()
+					with open("points.pkl", "wb") as f:
+				  		pickle.dump(points_dict, f)
 
-			except NameError as nme:
-				log.exception("Points file not found!")
+				except NameError as nme:
+					log.exception("Points file not found!")
 
-			distances_few = calculateDistances.few(final_image_path, "img_"+str(count), points_dict, reference_info)
-			log.info("Aggreagating distances: FEW")
-			few_distances_dict = aggregateDistances(distances_few, few_distances_dict, cf.OUTPUT_DIR+"/"+"distances_few", count, fn)
-			
-			distances_all = calculateDistances.all(points_dict, reference_info)
-			log.info("Aggreagating distances: ALL")
-			all_distances_dict = aggregateDistances(distances_all, all_distances_dict, cf.OUTPUT_DIR + "/"+"distances_all", count, fn)
+				# distances_few_eu = calculateDistancesCm.few(final_image_path, "img_"+str(count), points_dict, reference_info)
+				# log.info("Aggreagating distances: FEW")
+				# few_distances_dict_eu = aggregateDistances(distances_few_eu, few_distances_dict_eu, cf.OUTPUT_DIR+"/"+"distances_few", count, fn)
+				
+				distances_all_eu, distances_all_mh = calculateDistancesCm.all(points_dict, reference_info)
+				log.info("Aggreagating distances cm: ALL")
+				all_distances_dict_eu, all_distances_dict_mh = aggregateDistances(distances_all_eu, all_distances_dict_eu, 
+																					distances_all_mh, all_distances_dict_mh, 
+																					cf.OUTPUT_DIR + "/"+"distances_all_cm", count, fn)
 
-			distances_farkas = calculateDistances.farkas(points_dict, reference_info)
-			log.info("Aggreagating distances: FARKAS")
-			farkas_distances_dict = aggregateDistances(distances_farkas, farkas_distances_dict, cf.OUTPUT_DIR+"/"+"distances_farkas", count, fn)
+				distances_farkas_eu, distances_farkas_mh = calculateDistancesCm.farkas(points_dict, reference_info)
+				log.info("Aggreagating distances cm: FARKAS")
+				farkas_distances_dict_eu, farkas_distances_dict_mh = aggregateDistances(distances_farkas_eu, farkas_distances_dict_eu, 
+																						distances_farkas_mh, farkas_distances_dict_mh, 
+																						cf.OUTPUT_DIR+"/"+"distances_farkas_cm", count, fn)
+
+				distances_all_eu_px, distances_all_mh_px = calculateDistancesPx.all(points_dict, reference_info)
+				log.info("Aggreagating distances px: ALL")
+				all_distances_dict_eu_px, all_distances_dict_mh_px = aggregateDistances(distances_all_eu_px, all_distances_dict_eu_px, 
+																					distances_all_mh_px, all_distances_dict_mh_px, 
+																					cf.OUTPUT_DIR + "/"+"distances_all_px", count, fn)
+
+				distances_farkas_eu_px, distances_farkas_mh_px = calculateDistancesPx.farkas(points_dict, reference_info)
+				log.info("Aggreagating distances px: FARKAS")
+				farkas_distances_dict_eu_px, farkas_distances_dict_mh_px = aggregateDistances(distances_farkas_eu_px, farkas_distances_dict_eu_px, 
+																						distances_farkas_mh_px, farkas_distances_dict_mh_px, 
+																						cf.OUTPUT_DIR+"/"+"distances_farkas_px", count, fn)
+
+				distances_all_eu_px_1000 = copy.deepcopy(distances_all_eu_px)
+				distances_all_eu_px_1000.update((x, y*1000) for x, y in distances_all_eu_px_1000.items())
+
+				distances_all_mh_px_1000 = copy.deepcopy(distances_all_mh_px)
+				distances_all_mh_px_1000.update((x, y*1000) for x, y in distances_all_mh_px_1000.items())
+				log.info("Aggreagating distances px1000: ALL")
+
+				all_distances_dict_eu_px_1000, all_distances_dict_mh_px_1000 = aggregateDistances(distances_all_eu_px_1000, all_distances_dict_eu_px_1000, 
+																					distances_all_mh_px_1000, all_distances_dict_mh_px_1000, 
+																					cf.OUTPUT_DIR + "/"+"distances_all_px_1000", count, fn)
+
+				distances_farkas_eu_px_1000 = copy.deepcopy(distances_farkas_eu_px)
+				distances_farkas_eu_px_1000.update((x, y*1000) for x, y in distances_farkas_eu_px_1000.items())
+
+				distances_farkas_mh_px_1000 = copy.deepcopy(distances_farkas_mh_px)
+				distances_farkas_mh_px_1000.update((x, y*1000) for x, y in distances_farkas_mh_px_1000.items())
+				log.info("Aggreagating distances px1000: FARKAS")
+
+				farkas_distances_dict_eu_px_1000, farkas_distances_dict_mh_px_1000 = aggregateDistances(distances_farkas_eu_px_1000, farkas_distances_dict_eu_px_1000, 
+																					distances_farkas_mh_px_1000, farkas_distances_dict_mh_px_1000, 
+																					cf.OUTPUT_DIR + "/"+"distances_farkas_px_1000", count, fn)
 
 			count = count + 1 
 			img_names_processed.append(fn)
