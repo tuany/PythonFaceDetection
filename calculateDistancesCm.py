@@ -191,7 +191,7 @@ def all(points, reference):
 			x2 = "x_" + str(k)
 			y2 = "y_" + str(l)
 			distances_eu[key] = (dist.euclidean((points[x1], points[y1]), (points[x2], points[y2]))) / reference["pixelsPerMetric"]
-			distances_mh[key] = (dist.euclidean((points[x1], points[y1]), (points[x2], points[y2]))) / reference["pixelsPerMetric"]
+			distances_mh[key] = (dist.cityblock((points[x1], points[y1]), (points[x2], points[y2]))) / reference["pixelsPerMetric"]
 	
 	log.info("{0} distances_eu calculated".format(len(distances_eu)))
 	log.info("{0} distances_mh calculated".format(len(distances_mh)))

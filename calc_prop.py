@@ -5,13 +5,13 @@ import logging
 import matplotlib.pyplot as plt
 import config as cf
 
-logging.basicConfig(level=logging.DEBUG, filename=cf.ROOT_DIR+'/calculo-proporcoes-undistorted.log')
+logging.basicConfig(level=logging.DEBUG, filename=cf.ROOT_DIR+'/calculo-proporcoes2.log')
 
 def get_immediate_subdirectories(a_dir):
 	return [name for name in os.listdir(a_dir)
 		if os.path.isdir(os.path.join(a_dir, name))]
 
-def calc()
+def calc():
 	os.chdir(cf.IMG_DIR)
 	dirs = get_immediate_subdirectories("./")
 	proporcoes_corretas = {}
@@ -43,9 +43,14 @@ def calc()
 			continue
 
 	logging.info('proporcoes_corretas: %s', proporcoes_corretas)
+	logging.info('proporcoes_incorretas: %s', proporcoes_incorretas)
+	logging.info('erros: %s', erros)
 	correct_img = len(proporcoes_corretas.keys())
 	p = (float(correct_img) * 100.0) / float(total_img)
 	erro_medio = np.mean(erros.values())
 	std_erro_medio = np.std(erros.values())
 	logging.info('erro_medio: %.4f e desvio padrao: %.4f', erro_medio, std_erro_medio)
 	logging.info('porcentagem de images selecionadas: %.4f %%', p)
+
+if __name__ == '__main__':
+	calc()
