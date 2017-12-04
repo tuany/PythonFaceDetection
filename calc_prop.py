@@ -5,10 +5,12 @@ import logging
 import matplotlib.pyplot as plt
 import config as cf
 
-logging.basicConfig(level=logging.DEBUG, filename=cf.ROOT_DIR+'/calculo-proporcoes2.log')
+logging.basicConfig(level=logging.DEBUG, filename=cf.ROOT_DIR+'/calculo-proporcoes3.log')
 
 def get_immediate_subdirectories(a_dir):
-	return [name for name in os.listdir(a_dir)
+	dirlist = os.listdir(a_dir)
+	dirlist.sort()
+	return [name for name in dirlist
 		if os.path.isdir(os.path.join(a_dir, name))]
 
 def calc():
@@ -18,6 +20,10 @@ def calc():
 	proporcoes_incorretas = {}
 	erros = {}
 	total_img = len(dirs)
+	prop9 = 9.09090909091
+	correct_prop = prop9
+	alpha = 8.8
+	beta = 10
 
 	for d in dirs:
 		try:
@@ -30,9 +36,12 @@ def calc():
 					print("Altura: %.4f" % height)
 					proporcao = float(width / height)
 					print("proporcao: %.4f" % proporcao)
-					erro_proporcao = abs(proporcao - 9.09090909091)
+
+					print("Usando proporcao = %.3f" % correct_prop)
+					print("Usando alpha %.2f e beta %.2f" % (alpha, beta))
+					erro_proporcao = abs(proporcao - correct_prop)
 					print("erro: %.4f" % erro_proporcao)
-					if(proporcao > 9 and proporcao <= 10):
+					if(proporcao > alpha and proporcao <= beta):
 						print("Imagem %s tem proporcao correta" % d)
 						proporcoes_corretas[d] = proporcao
 						erros[d] = erro_proporcao
