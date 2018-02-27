@@ -121,10 +121,11 @@ if __name__ == '__main__':
 
 		file_exists = os.path.isfile(final_image_path)
 		reference_file_exists = os.path.isfile(output_folder+"/"+"reference_stripe.pkl")
-		# if not file_exists:
-			# iu.undistort(fn)
 		try:
 			reference_info = {}
+			# if not os.path.isfile(os.path.abspath(output_folder+"/undistorted.jpg")):
+			new_image = iu.undistort(fn)
+			cv2.imwrite(output_folder+"/undistorted.jpg", new_image)
 			if not file_exists:
 				faceNormalizer.normalize(fn)
 			if not reference_file_exists:
@@ -166,7 +167,7 @@ if __name__ == '__main__':
 			continue
 
 		log.info("Calling external programming for feature extraction")
-		file_exists = os.path.isfile(cf.ROOT_DIR+"/"+output_folder+"/points.csv")
+		file_exists = True#os.path.isfile(cf.ROOT_DIR+"/"+output_folder+"/points.csv")
 		if not file_exists:
 			process_out = subprocess.check_call([cf.EXTERNAL_EXEC_DIR+"/FeatureExtraction", "-f", final_image_path, "-of", output_folder+"/points.csv", "-oi", output_folder+"/marked.jpg", "-no3Dfp", "-noMparams", "-noPose", "-noAUs", "-noGaze"], shell=True)
 		else:
@@ -174,7 +175,7 @@ if __name__ == '__main__':
 		if process_out == 0:
 			log.info("Feature extraction done. Writing results to file.")
 			points_dict = {}
-			turnedoff = False
+			turnedoff = True
 			if not turnedoff:
 				try:
 					os.chdir(cf.ROOT_DIR+"/"+output_folder)

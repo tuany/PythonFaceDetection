@@ -36,6 +36,7 @@ def undistort(img_folder):
 	new_image = cv2.undistort(img, camera_matrix, dist_coefs, None, newcameramtx)
 	log.info("Undistorted image written to: %s" % outfile)
 	cv2.imwrite(outfile, new_image)
+	return new_image
 	
 if __name__ == '__main__':
 	print("Image undistortion module")

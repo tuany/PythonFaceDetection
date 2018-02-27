@@ -102,8 +102,6 @@ def detect(image_path):
 	log.debug("Computing euclidean distance between points in the reference stripe...")
 	dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
 	dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
-	print("dA:  %.2f" % (dA))
-	print("dB:  %.2f" % (dB))
 
 	# if the pixels per metric has not been initialized, then
 	# compute it as the ratio of pixels to supplied metric
@@ -119,19 +117,6 @@ def detect(image_path):
 	log.info("Reference stripe width in pixels (%.2f) and centimeters (%.2f)" % (dB, dimB))
 	log.info("Pixels per metric: (%.2f)" % (pixelsPerMetric))
 	return_dict = { "w-pixels": dB, "w-centimeters": dimB, "h-pixels": dA, "h-centimeters": dimA, "pixelsPerMetric": pixelsPerMetric, "coordinates": [tl, tr, br, bl] }
-	# draw the object sizes on the image
-	# cv2.putText(orig, "{:.1f}in".format(dimA),
-	# 	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.65, (255, 255, 255), 2)
-	# cv2.putText(orig, "{:.1f}in".format(dimB),
-	# 	(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.65, (255, 255, 255), 2)
-	# cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-	# cv2.resizeWindow('image', 800,600)
-	# cv2.imshow("image", orig)
-	# cv2.waitKey(0)
-	# except KeyboardInterrupt:
-	# 	log.info("Process interrupted manually")
 	log.info("Return dict: " + str(return_dict))
 	return return_dict, edged, orig
 

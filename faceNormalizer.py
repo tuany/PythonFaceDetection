@@ -160,8 +160,8 @@ def normalize(fn):
         log.info("Creating output images folder {}".format(img_folder))
         os.makedirs(img_folder)
     img_path = fn
-    # if os.path.isfile(img_folder + "/undistorted.jpg"):
-    #     img_path = img_folder + "/undistorted.jpg"
+    if os.path.isfile(img_folder + "/undistorted.jpg"):
+        img_path = img_folder + "/undistorted.jpg"
     rotated_img_path = img_folder + "/rotated.jpg" 
     orig = cv2.imread(img_path)
     log.info("Starting pre-processing of image {}".format(img_path))
