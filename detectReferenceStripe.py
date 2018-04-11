@@ -17,7 +17,7 @@ def detect(image_path):
 	log.debug("Converting {} to gray scale".format(image_path))
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	log.debug("Applying Gaussian Blur")
-	blurred = cv2.bilateralFilter(gray, 11, 17, 17)#cv2.GaussianBlur(gray, (7, 7), 0)
+	blurred = cv2.bilateralFilter(gray, 11, 17, 17)
 
 	# perform edge detection, then perform a dilation + erosion to
 	# close gaps in between object edges
@@ -42,7 +42,7 @@ def detect(image_path):
 	# 'pixels per metric' calibration variable
 	log.debug("Sorting countours: top-to-bottom")
 	(cnts, _) = contours.sort_contours(cnts, "top-to-bottom")
-	pixelsPerMetric = None #cf.PPM # obtained by testing reference stripe in several images
+	pixelsPerMetric = None 
 	# I will only use the most top contourArea that is the reference stripe
 	c = cnts[0]
 	i = 1

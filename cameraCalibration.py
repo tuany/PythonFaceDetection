@@ -115,13 +115,8 @@ def calculateDistortionMatrix():
         if not os.path.exists(output_folder):
             log.info("Creating output folder {}".format(output_folder))
             os.makedirs(output_folder)
-        # csvfile = open(output_folder+"/"+"distortion_matrix.csv", 'w')
 
         pickle.dump(reference_info, open(cf.DISTORTION_MATRIX, 'wb'))
-        # # fieldnames = ['rms', 'camera_matrix', 'dist_coefs']
-        # writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        # writer.writeheader()
-        # writer.writerow(reference_info)
         log.info("Saved distortion matrix {}".format(cf.DISTORTION_MATRIX))
     except IOError as e:
         if e.errno == errno.EACCES:
@@ -133,4 +128,5 @@ def calculateDistortionMatrix():
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+    print("Calculating distortion matrix")
     calculateDistortionMatrix()

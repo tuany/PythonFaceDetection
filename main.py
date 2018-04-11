@@ -123,9 +123,9 @@ if __name__ == '__main__':
 		reference_file_exists = os.path.isfile(output_folder+"/"+"reference_stripe.pkl")
 		try:
 			reference_info = {}
-			# if not os.path.isfile(os.path.abspath(output_folder+"/undistorted.jpg")):
-			new_image = iu.undistort(fn)
-			cv2.imwrite(output_folder+"/undistorted.jpg", new_image)
+			if not os.path.isfile(os.path.abspath(output_folder+"/undistorted.jpg")):
+				new_image = iu.undistort(fn)
+				cv2.imwrite(output_folder+"/undistorted.jpg", new_image)
 			if not file_exists:
 				faceNormalizer.normalize(fn)
 			if not reference_file_exists:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
 			continue
 
 		log.info("Calling external programming for feature extraction")
-		file_exists = True#os.path.isfile(cf.ROOT_DIR+"/"+output_folder+"/points.csv")
+		file_exists = os.path.isfile(cf.ROOT_DIR+"/"+output_folder+"/points.csv")
 		if not file_exists:
 			process_out = subprocess.check_call([cf.EXTERNAL_EXEC_DIR+"/FeatureExtraction", "-f", final_image_path, "-of", output_folder+"/points.csv", "-oi", output_folder+"/marked.jpg", "-no3Dfp", "-noMparams", "-noPose", "-noAUs", "-noGaze"], shell=True)
 		else:
@@ -175,73 +175,67 @@ if __name__ == '__main__':
 		if process_out == 0:
 			log.info("Feature extraction done. Writing results to file.")
 			points_dict = {}
-			turnedoff = True
-			if not turnedoff:
-				try:
-					os.chdir(cf.ROOT_DIR+"/"+output_folder)
-					points_file = open("points.csv", 'rb')
-					reader = csv.reader(points_file)
-					headers = reader.next()
-					for row in reader:
-						for h, v in zip(headers, row):
-							points_dict[h.strip()] = float(v)
-					log.info("Points file saved!")
-					points_file.close()
-					with open("points.pkl", "wb") as f:
-				  		pickle.dump(points_dict, f)
+			try:
+				os.chdir(cf.ROOT_DIR+"/"+output_folder)
+				points_file = open("points.csv", 'rb')
+				reader = csv.reader(points_file)
+				headers = reader.next()
+				for row in reader:
+					for h, v in zip(headers, row):
+						points_dict[h.strip()] = float(v)
+				log.info("Points file saved!")
+				points_file.close()
+				with open("points.pkl", "wb") as f:
+			  		pickle.dump(points_dict, f)
 
-				except NameError as nme:
-					log.exception("Points file not found!")
+			except NameError as nme:
+				log.exception("Points file not found!")
+			
+			distances_all_eu, distances_all_mh = calculateDistancesCm.all(points_dict, reference_info)
+			log.info("Aggreagating distances cm: ALL")
+			all_distances_dict_eu, all_distances_dict_mh = aggregateDistances(distances_all_eu, all_distances_dict_eu, 
+																				distances_all_mh, all_distances_dict_mh, 
+																				cf.OUTPUT_DIR + "/"+"distances_all_cm", count, fn)
 
-				# distances_few_eu = calculateDistancesCm.few(final_image_path, "img_"+str(count), points_dict, reference_info)
-				# log.info("Aggreagating distances: FEW")
-				# few_distances_dict_eu = aggregateDistances(distances_few_eu, few_distances_dict_eu, cf.OUTPUT_DIR+"/"+"distances_few", count, fn)
-				
-				distances_all_eu, distances_all_mh = calculateDistancesCm.all(points_dict, reference_info)
-				log.info("Aggreagating distances cm: ALL")
-				all_distances_dict_eu, all_distances_dict_mh = aggregateDistances(distances_all_eu, all_distances_dict_eu, 
-																					distances_all_mh, all_distances_dict_mh, 
-																					cf.OUTPUT_DIR + "/"+"distances_all_cm", count, fn)
+			distances_farkas_eu, distances_farkas_mh = calculateDistancesCm.farkas(points_dict, reference_info)
+			log.info("Aggreagating distances cm: FARKAS")
+			farkas_distances_dict_eu, farkas_distances_dict_mh = aggregateDistances(distances_farkas_eu, farkas_distances_dict_eu, 
+																					distances_farkas_mh, farkas_distances_dict_mh, 
+																					cf.OUTPUT_DIR+"/"+"distances_farkas_cm", count, fn)
 
-				distances_farkas_eu, distances_farkas_mh = calculateDistancesCm.farkas(points_dict, reference_info)
-				log.info("Aggreagating distances cm: FARKAS")
-				farkas_distances_dict_eu, farkas_distances_dict_mh = aggregateDistances(distances_farkas_eu, farkas_distances_dict_eu, 
-																						distances_farkas_mh, farkas_distances_dict_mh, 
-																						cf.OUTPUT_DIR+"/"+"distances_farkas_cm", count, fn)
+			distances_all_eu_px, distances_all_mh_px = calculateDistancesPx.all(points_dict, reference_info)
+			log.info("Aggreagating distances px: ALL")
+			all_distances_dict_eu_px, all_distances_dict_mh_px = aggregateDistances(distances_all_eu_px, all_distances_dict_eu_px, 
+																				distances_all_mh_px, all_distances_dict_mh_px, 
+																				cf.OUTPUT_DIR + "/"+"distances_all_px", count, fn)
 
-				distances_all_eu_px, distances_all_mh_px = calculateDistancesPx.all(points_dict, reference_info)
-				log.info("Aggreagating distances px: ALL")
-				all_distances_dict_eu_px, all_distances_dict_mh_px = aggregateDistances(distances_all_eu_px, all_distances_dict_eu_px, 
-																					distances_all_mh_px, all_distances_dict_mh_px, 
-																					cf.OUTPUT_DIR + "/"+"distances_all_px", count, fn)
+			distances_farkas_eu_px, distances_farkas_mh_px = calculateDistancesPx.farkas(points_dict, reference_info)
+			log.info("Aggreagating distances px: FARKAS")
+			farkas_distances_dict_eu_px, farkas_distances_dict_mh_px = aggregateDistances(distances_farkas_eu_px, farkas_distances_dict_eu_px, 
+																					distances_farkas_mh_px, farkas_distances_dict_mh_px, 
+																					cf.OUTPUT_DIR+"/"+"distances_farkas_px", count, fn)
 
-				distances_farkas_eu_px, distances_farkas_mh_px = calculateDistancesPx.farkas(points_dict, reference_info)
-				log.info("Aggreagating distances px: FARKAS")
-				farkas_distances_dict_eu_px, farkas_distances_dict_mh_px = aggregateDistances(distances_farkas_eu_px, farkas_distances_dict_eu_px, 
-																						distances_farkas_mh_px, farkas_distances_dict_mh_px, 
-																						cf.OUTPUT_DIR+"/"+"distances_farkas_px", count, fn)
+			distances_all_eu_px_1000 = copy.deepcopy(distances_all_eu_px)
+			distances_all_eu_px_1000.update((x, y*1000) for x, y in distances_all_eu_px_1000.items())
 
-				distances_all_eu_px_1000 = copy.deepcopy(distances_all_eu_px)
-				distances_all_eu_px_1000.update((x, y*1000) for x, y in distances_all_eu_px_1000.items())
+			distances_all_mh_px_1000 = copy.deepcopy(distances_all_mh_px)
+			distances_all_mh_px_1000.update((x, y*1000) for x, y in distances_all_mh_px_1000.items())
+			log.info("Aggreagating distances px1000: ALL")
 
-				distances_all_mh_px_1000 = copy.deepcopy(distances_all_mh_px)
-				distances_all_mh_px_1000.update((x, y*1000) for x, y in distances_all_mh_px_1000.items())
-				log.info("Aggreagating distances px1000: ALL")
+			all_distances_dict_eu_px_1000, all_distances_dict_mh_px_1000 = aggregateDistances(distances_all_eu_px_1000, all_distances_dict_eu_px_1000, 
+																				distances_all_mh_px_1000, all_distances_dict_mh_px_1000, 
+																				cf.OUTPUT_DIR + "/"+"distances_all_px_1000", count, fn)
 
-				all_distances_dict_eu_px_1000, all_distances_dict_mh_px_1000 = aggregateDistances(distances_all_eu_px_1000, all_distances_dict_eu_px_1000, 
-																					distances_all_mh_px_1000, all_distances_dict_mh_px_1000, 
-																					cf.OUTPUT_DIR + "/"+"distances_all_px_1000", count, fn)
+			distances_farkas_eu_px_1000 = copy.deepcopy(distances_farkas_eu_px)
+			distances_farkas_eu_px_1000.update((x, y*1000) for x, y in distances_farkas_eu_px_1000.items())
 
-				distances_farkas_eu_px_1000 = copy.deepcopy(distances_farkas_eu_px)
-				distances_farkas_eu_px_1000.update((x, y*1000) for x, y in distances_farkas_eu_px_1000.items())
+			distances_farkas_mh_px_1000 = copy.deepcopy(distances_farkas_mh_px)
+			distances_farkas_mh_px_1000.update((x, y*1000) for x, y in distances_farkas_mh_px_1000.items())
+			log.info("Aggreagating distances px1000: FARKAS")
 
-				distances_farkas_mh_px_1000 = copy.deepcopy(distances_farkas_mh_px)
-				distances_farkas_mh_px_1000.update((x, y*1000) for x, y in distances_farkas_mh_px_1000.items())
-				log.info("Aggreagating distances px1000: FARKAS")
-
-				farkas_distances_dict_eu_px_1000, farkas_distances_dict_mh_px_1000 = aggregateDistances(distances_farkas_eu_px_1000, farkas_distances_dict_eu_px_1000, 
-																					distances_farkas_mh_px_1000, farkas_distances_dict_mh_px_1000, 
-																					cf.OUTPUT_DIR + "/"+"distances_farkas_px_1000", count, fn)
+			farkas_distances_dict_eu_px_1000, farkas_distances_dict_mh_px_1000 = aggregateDistances(distances_farkas_eu_px_1000, farkas_distances_dict_eu_px_1000, 
+																				distances_farkas_mh_px_1000, farkas_distances_dict_mh_px_1000, 
+																				cf.OUTPUT_DIR + "/"+"distances_farkas_px_1000", count, fn)
 
 			count = count + 1 
 			img_names_processed.append(fn)
